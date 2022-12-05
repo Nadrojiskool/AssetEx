@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import PropTypes from 'prop-types';
-import { Box, Button, Divider, Drawer, Typography, useMediaQuery } from '@mui/material';
+import { Box, Button, Divider, Drawer, List, ListSubheader, MenuItem, Popover, Typography, useMediaQuery } from '@mui/material';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { ChartBar as ChartBarIcon } from '../icons/chart-bar';
 import { Cog as CogIcon } from '../icons/cog';
@@ -15,13 +15,9 @@ import { Users as UsersIcon } from '../icons/users';
 import { XCircle as XCircleIcon } from '../icons/x-circle';
 import { Logo } from './logo';
 import { NavItem } from './nav-item';
+import HomeIcon from '@mui/icons-material/Home';
 
 const items = [
-  {
-    href: '/',
-    icon: (<ChartBarIcon fontSize="small" />),
-    title: 'Dashboard'
-  },
   {
     href: '/customers',
     icon: (<UsersIcon fontSize="small" />),
@@ -59,13 +55,122 @@ const items = [
   }
 ];
 
+const protocols = [
+  {
+    name: 'Asset Layer',
+    type: 'Digital',
+    disabled: true
+  },
+  {
+    name: 'Asset Layer',
+    type: 'Physical'
+  },
+  {
+    name: 'RUN',
+    disabled: true
+  },
+  {
+    name: 'SFP',
+    disabled: true
+  }
+];
+
+const getSections = () => [
+  {
+    title: 'Seller',
+    items: [
+      {
+        title: 'Dashboard',
+        href: '/',
+        icon: <HomeIcon fontSize="small" />
+      }
+    ]
+  }
+];
+
+const DashboardSidebarSection = (props) => {
+  const { items, path, title, ...other } = props;
+
+  return (
+    <List
+      subheader={(
+        <ListSubheader
+          disableGutters
+          disableSticky
+          sx={{
+            color: 'inherit',
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            lineHeight: 2.5,
+            ml: 4,
+            pb: 1,
+            textTransform: 'uppercase'
+          }}
+        >
+          {title}
+        </ListSubheader>
+      )}
+      {...other}
+    >
+      { items.map((item) => (
+        <NavItem
+          key={item.title}
+          icon={item.icon}
+          href={item.href}
+          title={item.title}
+        />
+      )) }
+    </List>
+  );
+};
+
+const OrganizationPopover = (props) => {
+  const { anchorEl, onClose, open, setter, ...other } = props;
+
+  const handleChange = (protocol) => {
+    // setter(protocol);
+    onClose?.();
+  };
+
+  return (
+    <Popover
+      anchorEl={anchorEl}
+      anchorOrigin={{
+        horizontal: 'left',
+        vertical: 'bottom'
+      }}
+      keepMounted
+      onClose={onClose}
+      open={!!open}
+      PaperProps={{ sx: { width: 248 } }}
+      transitionDuration={0}
+      {...other}
+    >
+      {protocols.map((protocol) => (
+        <MenuItem
+          key={protocol.name + protocol.type}
+          onClick={(e) => handleChange(protocol)}
+          disabled={protocol.disabled}
+        >
+          { `${protocol.name}${(protocol.type) ? ` - ${protocol.type}` : ''}` }
+        </MenuItem>
+      ))}
+    </Popover>
+  );
+};
+
 export const DashboardSidebar = (props) => {
   const { open, onClose } = props;
+  const [protocol, setProtocol] = useState(protocols[1]);
+  const [changeProtocol, setChangeProtocol] = useState(false);
   const router = useRouter();
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'), {
     defaultMatches: true,
     noSsr: false
   });
+  const organizationsRef = useRef/*<HTMLButtonElement | null>*/(null);
+  const [openOrganizationsPopover, setOpenOrganizationsPopover] = useState(false);
+  const sections = useMemo(() => getSections(), []);
 
   useEffect(
     () => {
@@ -80,6 +185,14 @@ export const DashboardSidebar = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [router.asPath]
   );
+
+  const handleOpenOrganizationsPopover = () => {
+    setOpenOrganizationsPopover(true);
+  };
+
+  const handleCloseOrganizationsPopover = () => {
+    setOpenOrganizationsPopover(false);
+  };
 
   const content = (
     <>
@@ -106,44 +219,39 @@ export const DashboardSidebar = (props) => {
               </a>
             </NextLink>
           </Box>
-          <Box sx={{ px: 2 }}>
-            <Box
-              sx={{
-                alignItems: 'center',
-                backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                cursor: 'pointer',
-                display: 'flex',
-                justifyContent: 'space-between',
-                px: 3,
-                py: '11px',
-                borderRadius: 1
-              }}
-            >
-              <div>
-                <Typography
-                  color="inherit"
-                  variant="subtitle1"
-                >
-                  Acme Inc
-                </Typography>
-                <Typography
-                  color="neutral.400"
-                  variant="body2"
-                >
-                  Your tier
-                  {' '}
-                  : Premium
-                </Typography>
-              </div>
-              <SelectorIcon
+            <Box sx={{ px: 2 }}>
+              <Box
+                onClick={handleOpenOrganizationsPopover}
+                ref={organizationsRef}
                 sx={{
-                  color: 'neutral.500',
-                  width: 14,
-                  height: 14
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  px: 3,
+                  py: '11px',
+                  borderRadius: 1
                 }}
-              />
+              >
+                <div>
+                  <Typography variant="subtitle1">
+                    { protocol.name }
+                  </Typography>
+                  { protocol.type && 
+                    <Typography variant="body2">
+                      { protocol.type }
+                    </Typography> 
+                  }
+                </div>
+                <SelectorIcon
+                  sx={{
+                    width: 14,
+                    height: 14
+                  }}
+                />
+              </Box>
             </Box>
-          </Box>
         </div>
         <Divider
           sx={{
@@ -151,7 +259,7 @@ export const DashboardSidebar = (props) => {
             my: 3
           }}
         />
-        <Box sx={{ flexGrow: 1 }}>
+        <Box sx={{ pb: 2 }}>
           {items.map((item) => (
             <NavItem
               key={item.title}
@@ -161,58 +269,28 @@ export const DashboardSidebar = (props) => {
             />
           ))}
         </Box>
-        <Divider sx={{ borderColor: '#2D3748' }} />
-        <Box
-          sx={{
-            px: 2,
-            py: 3
-          }}
-        >
-          <Typography
-            color="neutral.100"
-            variant="subtitle2"
-          >
-            Need more features?
-          </Typography>
-          <Typography
-            color="neutral.500"
-            variant="body2"
-          >
-            Check out our Pro solution template.
-          </Typography>
-          <Box
-            sx={{
-              display: 'flex',
-              mt: 2,
-              mx: 'auto',
-              width: '160px',
-              '& img': {
-                width: '100%'
-              }
-            }}
-          >
-            <img
-              alt="Go to pro"
-              src="/static/images/sidebar_pro.png"
+        <Box sx={{ flexGrow: 1 }}>
+          { sections.map((section) => (
+            <DashboardSidebarSection
+              key={section.title}
+              path={router.asPath}
+              sx={{
+                mt: 2,
+                '& + &': {
+                  mt: 2
+                }
+              }}
+              { ...section }
             />
-          </Box>
-          <NextLink
-            href="https://material-kit-pro-react.devias.io/"
-            passHref
-          >
-            <Button
-              color="secondary"
-              component="a"
-              endIcon={(<OpenInNewIcon />)}
-              fullWidth
-              sx={{ mt: 2 }}
-              variant="contained"
-            >
-              Pro Live Preview
-            </Button>
-          </NextLink>
+          ))}
         </Box>
       </Box>
+      <OrganizationPopover
+        anchorEl={organizationsRef.current}
+        onClose={handleCloseOrganizationsPopover}
+        open={openOrganizationsPopover}
+        setter={setProtocol}
+      />
     </>
   );
 
