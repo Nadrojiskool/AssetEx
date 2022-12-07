@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { auth, ENABLE_AUTH } from '../lib/auth';
 
 const HANDLERS = {
   INITIALIZE: 'INITIALIZE',
@@ -67,45 +66,14 @@ export const AuthProvider = (props) => {
 
   const initialize = async () => {
     // Prevent from calling twice in development mode with React.StrictMode enabled
-    if (initialized.current) {
-      return;
-    }
-
-    initialized.current = true;
-
-    // Check if auth has been skipped
-    // From sign-in page we may have set "skip-auth" to "true"
-    const authSkipped = globalThis.sessionStorage.getItem('skip-auth') === 'true';
-
-    if (authSkipped) {
-      const user = {};
-
-      dispatch({
-        type: HANDLERS.INITIALIZE,
-        payload: user
-      });
-      return;
-    }
-
-    // Check if authentication with Zalter is enabled
-    // If not, then set user as authenticated
-    if (!ENABLE_AUTH) {
-      const user = {};
-
-      dispatch({
-        type: HANDLERS.INITIALIZE,
-        payload: user
-      });
-      return;
-    }
+    if (initialized.current) return;
+    else initialized.current = true;
 
     try {
-      // Check if user is authenticated
-      const isAuthenticated = await auth.isAuthenticated();
+      const authToken = window.localStorage.getItem('authToken');
 
-      if (isAuthenticated) {
-        // Get user from your database
-        const user = {};
+      if (authToken) {
+        const user = { authToken };
 
         dispatch({
           type: HANDLERS.INITIALIZE,
@@ -136,6 +104,8 @@ export const AuthProvider = (props) => {
   };
 
   const signOut = () => {
+    window.localStorage.removeItem('authToken');
+
     dispatch({
       type: HANDLERS.SIGN_OUT
     });

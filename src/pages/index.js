@@ -1,116 +1,65 @@
 import Head from 'next/head';
-import { Box, Container, Grid } from '@mui/material';
-import { Budget } from '../components/dashboard/budget';
-import { LatestOrders } from '../components/dashboard/latest-orders';
-import { LatestProducts } from '../components/dashboard/latest-products';
-import { Sales } from '../components/dashboard/sales';
-import { TasksProgress } from '../components/dashboard/tasks-progress';
-import { TotalCustomers } from '../components/dashboard/total-customers';
-import { TotalProfit } from '../components/dashboard/total-profit';
-import { TrafficByDevice } from '../components/dashboard/traffic-by-device';
-import { DashboardLayout } from '../components/dashboard-layout';
+import { useLink } from 'next/link';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+import { Box, Button, Container, Grid } from '@mui/material';
+import { useAuthContext } from '../contexts/auth-context';
 
-const Page = () => (
-  <>
-    <Head>
-      <title>
-        Dashboard | Material Kit
-      </title>
-    </Head>
-    <Box
-      component="main"
-      sx={{
-        flexGrow: 1,
-        py: 8
-      }}
-    >
-      <Container maxWidth={false}>
-        <Grid
-          container
-          spacing={3}
-        >
-          <Grid
-            item
-            lg={3}
-            sm={6}
-            xl={3}
-            xs={12}
-          >
-            <Budget />
-          </Grid>
-          <Grid
-            item
-            xl={3}
-            lg={3}
-            sm={6}
-            xs={12}
-          >
-            <TotalCustomers />
-          </Grid>
-          <Grid
-            item
-            xl={3}
-            lg={3}
-            sm={6}
-            xs={12}
-          >
-            <TasksProgress />
-          </Grid>
-          <Grid
-            item
-            xl={3}
-            lg={3}
-            sm={6}
-            xs={12}
-          >
-            <TotalProfit sx={{ height: '100%' }} />
-          </Grid>
-          <Grid
-            item
-            lg={8}
-            md={12}
-            xl={9}
-            xs={12}
-          >
-            <Sales />
-          </Grid>
-          <Grid
-            item
-            lg={4}
-            md={6}
-            xl={3}
-            xs={12}
-          >
-            <TrafficByDevice sx={{ height: '100%' }} />
-          </Grid>
-          <Grid
-            item
-            lg={4}
-            md={6}
-            xl={3}
-            xs={12}
-          >
-            <LatestProducts sx={{ height: '100%' }} />
-          </Grid>
-          <Grid
-            item
-            lg={8}
-            md={12}
-            xl={9}
-            xs={12}
-          >
-            <LatestOrders />
-          </Grid>
-        </Grid>
-      </Container>
-    </Box>
-  </>
-);
+const appId = "636b0c16b4d0e6825f9335b2";
+const redirectionURL = 'https://app.handcash.io/#/authorizeApp?appId=' + appId;
+/*
+const { HandCashConnect } = require('@handcash/handcash-connect');
+const handCashConnect = new HandCashConnect({
+  appId: String(process.env.ASSETX_HANDCASH_APPID),
+  appSecret: String(process.env.ASSETX_HANDCASH_SECRET),
+});
+*/
 
-Page.getLayout = (page) => (
-  <DashboardLayout>
-    {page}
-  </DashboardLayout>
-);
+function checkForAuth(auth, router) {
+  const { origin, pathname, search } = window.location;
+  const params = new URLSearchParams(search);
+  const authToken = params.get('authToken') 
+    || window.localStorage.getItem('authToken') 
+    || null;
+  
+  if (authToken) {
+    window.localStorage.setItem('authToken', authToken);
+    auth.signIn({ authToken });
+    router.push(origin + '/dashboard');
+  }
+}
+
+const Page = () => {
+  const auth = useAuthContext();
+  const router = useRouter();
+
+  function checkAuth() { if (window) checkForAuth(auth, router); }
+  function login() { window.location.href = redirectionURL; }
+
+  useEffect(checkAuth, []);
+
+  return (
+    <>
+      <Head>
+        <title>
+          Login | AssetX
+        </title>
+      </Head>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          py: 8
+        }}
+      >
+        <Container maxWidth={false}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%' }}>
+              <Button sx={{ background: 'lightgreen' }} onClick={login}>Login with Handcash</Button>
+          </Box>
+        </Container>
+      </Box>
+    </>
+  );
+};
 
 export default Page;

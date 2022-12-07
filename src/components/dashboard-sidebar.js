@@ -81,7 +81,7 @@ const getSections = () => [
     items: [
       {
         title: 'Dashboard',
-        href: '/',
+        href: '/dashboard',
         icon: <HomeIcon fontSize="small" />
       }
     ]
