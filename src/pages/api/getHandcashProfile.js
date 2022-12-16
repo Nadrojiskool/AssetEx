@@ -8,7 +8,13 @@ import { useAuthContext } from '../contexts/auth-context';
 const appId = "636b0c16b4d0e6825f9335b2";
 const redirectionURL = 'https://app.handcash.io/#/authorizeApp?appId=' + appId;
 
-async function checkForAuth(auth, router) {
+const { HandCashConnect } = require('@handcash/handcash-connect');
+const handCashConnect = new HandCashConnect({
+  appId: String(process.env.ASSETX_HANDCASH_APPID),
+  appSecret: String(process.env.ASSETX_HANDCASH_SECRET),
+});
+
+function checkForAuth(auth, router) {
   const { origin, pathname, search } = window.location;
   const params = new URLSearchParams(search);
   const authToken = params.get('authToken') 
@@ -17,7 +23,7 @@ async function checkForAuth(auth, router) {
   
   if (authToken) {
     window.localStorage.setItem('authToken', authToken);
-    await auth.signIn({ authToken });
+    auth.signIn({ authToken });
     router.push(origin + '/dashboard');
   }
 }

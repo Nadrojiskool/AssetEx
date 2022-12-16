@@ -1,4 +1,4 @@
-
+/*
 import { Spine } from 'pixi-spine';
 import * as PIXI from 'pixi.js';
 import { PixiComponent, applyDefaultProps } from '@inlet/react-pixi';
@@ -46,3 +46,4 @@ const SpineAnimation = PixiComponent('SpineAnimation', {
 
 
 export default SpineAnimation;
+*/

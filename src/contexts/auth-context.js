@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import PropTypes from 'prop-types';
+import { authApi } from '../_api_/auth-api';
 
 const HANDLERS = {
   INITIALIZE: 'INITIALIZE',
@@ -96,7 +97,11 @@ export const AuthProvider = (props) => {
     initialize().catch(console.error);
   }, []);
 
-  const signIn = (user) => {
+  const signIn = async (user) => {
+    const profile = await authApi.getProfile(user.authToken);
+
+    console.log('signed in', profile);
+
     dispatch({
       type: HANDLERS.SIGN_IN,
       payload: user
